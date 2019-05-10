@@ -20,6 +20,16 @@ public class Student implements Serializable {
     private String email;
     private String identityCard;
 
+    public String getGradeName() {
+        return gradeName;
+    }
+
+    public void setGradeName(String gradeName) {
+        this.gradeName = gradeName;
+    }
+
+    private String gradeName;
+
     public Integer getStudentNo() {
         return studentNo;
     }

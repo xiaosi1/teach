@@ -9,6 +9,24 @@ public class Result implements Serializable {
     private Integer subjectNo;
     private Date examDate;
     private Integer studentResult;
+    private String studentName;
+    private String subJectName;
+
+    public String getStudentName() {
+        return studentName;
+    }
+
+    public void setStudentName(String studentName) {
+        this.studentName = studentName;
+    }
+
+    public String getSubJectName() {
+        return subJectName;
+    }
+
+    public void setSubJectName(String subJectName) {
+        this.subJectName = subJectName;
+    }
 
     public Integer getResultNo() {
         return resultNo;

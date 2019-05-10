@@ -68,7 +68,11 @@
                         </div>
                         <div class="form-group">
                             <label for="gradeID">年级ID</label>
-                            <input type="text" class="form-control" id="gradeID" placeholder="年级ID" required>
+                            <select id="gradeID" name="gradeID" class="form-control">
+                                <option th:each="grade:${gradeList}" th:text="${grade.gradeName}"
+                                        th:value="${grade.gradeID}">
+                                </option>
+                            </select>
                         </div>
                         <button type="button" class="btn btn-primary" id="addSubject">添加</button>
                     </form>
@@ -98,16 +102,169 @@
 <script th:src="@{/static/js/lib/ie10-viewport-bug-workaround.js}"></script>
 <!--1.使用bootstrapTable将json数据渲染到页面-->
 <script>
-   
+    function getSubjectFn() {
+        $("#table_subject").bootstrapTable({
+            url: "/sub/findSubAll",  //请求的URL地址
+            type: "GET",             //请求的类型
+            dateType: "json",       //期望返回的数据类型
+            pagination: true,       //是否进行分页
+            search: true,           //是否要搜索框
+            showRefresh: true,      //是否要刷新按钮
+            pageSize: 5,            //初始化每页显示几条数据
+            pageList: [1, 2, 3, 4, 5],   //页面显示数据条数选择
+            columns: [{
+                field: "subjectNo",
+                title: "课程编号",
+                align: "center",
+                valign: "middle",
+                searchable: true
+            }, {
+                field: "subjectName",
+                title: "课程名称",
+                align: "center",
+                valign: "middle",
+                searchable: true
+            }, {
+                field: "classHour",
+                title: "课时数",
+                align: "center",
+                valign: "middle",
+                searchable: true
+            }, {
+                field: "gradeName",
+                title: "年级",
+                align: "center",
+                valign: "middle",
+                searchable: true
+            }
+            ]
+        })
+    }
+
+    getSubjectFn()
 </script>
 <!--2.关于表格点击每一行tr背景颜色的变化。添加了一个class——》tr_new，后面的操作全是通过这个class取获取主键进行操作的-->
 <script>
-  
+    $(function () {
+        //给tr添加点击事件
+        $("#table_subject tbody").on("click", "tr", function () {
+            //不管之前点没点 先清除一下样式
+            $("#table_subject tbody tr").removeClass("tr_new");
+            //为当前点击的行，添加样式
+            $(this).addClass("tr_new");
+        })
+    })
 </script>
 
 <!--3.对添加，保存，编辑，取消编辑，删除，全部删除进行对应的操作-->
 <script>
-   
-</script>
+   $(function () {
+       //删除
+       $("#del").on("click", function () {
+           var trFather = $(".tr_new");
+           if (trFather.length != 1) {
+               alert("请选择一行要删除的数据！");
+           } else {
+               var isOk = confirm("您确定要删除吗？");
+               if (isOk) {
+                   var subjectNo = trFather.children()[0].innerText;  //trFather的第一个儿子的内容  resultNo显示出来
+                   $.ajax({
+                       url: "/sub/deleteSub/" + subjectNo,
+                       type: "DELETE",
+                       success: function (data) {
+                           //1.将后台返回的信息显示出来，进行一个温馨提示
+                           alert(data.myMsg);
+                           //2.重新渲染页面
+                           window.location.reload();
+                       }
+                   })
+               }
+           }
 
+       })
+       //编辑
+       $("#edit").on("click", function () {
+           var trFather = $(".tr_new");
+           if (trFather.length != 1) {
+               alert("请选择一行要编辑的数据！");
+           } else {
+               var child = trFather.children();
+               child[1].innerHTML = '<input type="text" size="10"  class="subjectName" value="' + child[1].innerText + '"/>';  //通过value获取值
+               child[2].innerHTML = '<input type="text" size="10"  class="classHour" value="' + child[2].innerText + '"/>';  //通过value获取值
+               $("#table_subject tbody tr").unbind("click");  //取消修改
+           }
+           $(this).unbind("click")  //取消修改后
+       })
+       //取消编辑
+       $("#cancel").on("click", function () {
+           window.location.reload();
+       })
+       //保存
+       $("#save").on("click", function () {
+           var trFather = $(".tr_new");
+           if (trFather.length != 1) {
+               alert("请选择一行数据进行编辑！");
+           } else {
+               var subNo = trFather.children()[0].innerText;
+               var subName = $(".subjectName").val();   //获取文本框中得值
+               var classHour = $(".classHour").val();   //获取文本框中得值
+               $.ajax({
+                   url: "/sub/updateSub",
+                   type: "PUT",  //添加 修改PUT 查询get  删除delete
+                   data: {
+                       subjectNo: subNo,   //进行赋值  前面：后端  后面：前端
+                       subjectName: subName,
+                       classHour: classHour
+                   },
+                   success: function (data) {
+                       //1.温馨提示：将后端的返回值显示一下
+                       alert(data.myMsg);
+                       //2.重新渲染页面
+                       window.location.reload();
+                   }
+               })
+           }
+       })
+       //5.添加
+       $("#addSubject").on("click", function () {
+           var subName = $("#subName").val();
+           var classHour = $("#hours").val();
+           var gradeID = $("#gradeID").val();
+           $.ajax({
+               url: "/sub/addSubject",
+               type: "PUT",
+               data: {
+                   subjectName: subName,
+                   classHour: classHour,
+                   gradeID: gradeID
+               },
+               success: function (data) {
+                   alert(data.myMsg);
+                   window.location.reload();
+               }
+           })
+       })
+       //6.对年级ID进行异步查询优化
+       $("#gradeID").on("blur", function () {
+           var gradeID = $("#gradeID").val();
+           $("#gradeID").removeClass();
+           if (gradeID != "") {
+               $.ajax({
+                   url: "/sub/getSubByNo/" + gradeID,
+                   type: "GET",
+                   success: function (data) {
+                       $("#gradeID").html("温馨提示：" + data.myMsg);
+                       $("#gradeID").addClass("blue");
+
+                   }
+               })
+           } else {
+               $("#gradeID").html("温馨提示：学号不能为空")
+               $("#gradeID").addClass("red");
+           }
+       })
+
+   })
+
+</script>
 </html>
